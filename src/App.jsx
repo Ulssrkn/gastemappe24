@@ -1,513 +1,760 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 
-// Multi-language translation dictionary
+const AVAILABLE_ICONS = ['📌', '🍳', '🅿️', '📶', '🔑', '🏊‍♂️', '🍷', '☕', '📺', '🐾', '🚲', '🧹', '🕒', '💶', '📍'];
+
 const TRANSLATIONS = {
   de: {
     home: 'Startseite',
-    admin: '⚙️ Admin Panel',
+    admin: '⚙️ Admin',
     guestView: '📱 Gast-Ansicht',
     overview: 'Übersicht',
     rules: 'Regeln',
     gastronomy: 'Essen',
     guides: 'Tipps',
-    reception: '📞 Rezeption',
-    directions: '📍 Anfahrt',
-    checkinOut: 'Check-in / Out',
     wifi: 'WLAN',
-    highspeedWifi: 'WLAN Highspeed',
-    network: 'Netzwerk',
-    password: 'Passwort',
     copy: 'Kopieren',
     copied: '✅ Kopiert!',
     copyPassword: 'Passwort kopieren',
-    editHotel: '🏨 Hotel-Einstellungen',
+    editHotel: '🏨 Hotel & Medien Bearbeiten',
     hotelName: 'Hotel Name',
     tagline: 'Slogan / Untertitel',
+    logoLabel: 'Hotel Logo (PNG / JPEG oder Emoji)',
+    chooseFile: '📁 Datei wählen',
+    sliderPhotos: 'Slider Fotos (max. 5 Bilder, max. 5MB)',
+    legalNote: '⚠️ Rechtlicher Hinweis: Bitte laden Sie nur Bilder hoch, an denen Sie die Rechte besitzen (DSGVO).',
+    addPhotoBtn: '➕ Foto für Slider hinzufügen',
     address: 'Adresse',
     wifiName: 'WLAN Name',
     wifiPass: 'WLAN Passwort',
+    instagramUrl: 'Instagram Link / Username',
+    facebookUrl: 'Facebook Link / Page',
+    followUs: 'Folgen Sie uns auf Social Media',
+    socialDesc: 'Teilen Sie Ihre Erlebnisse und bleiben Sie mit uns in Kontakt!',
     save: '💾 Speichern',
     addSection: '➕ Neuen Bereich Hinzufügen',
     titlePlaceholder: 'Titel (z.B. Frühstück)',
     descPlaceholder: 'Untertitel (z.B. 08:00 - 10:30 Uhr)',
     contentPlaceholder: 'Inhalt...',
     addBtn: 'Hinzufügen',
-    entries: '🗑️ Bestehende Einträge',
+    entries: '🗑️ Einträge',
     delete: 'Löschen',
-    qrTitle: '📱 Hotel QR-Code für Zimmer',
-    qrDesc: 'Scannen Sie diesen Code mit dem Handy oder laden Sie das Bild für den Druck herunter.',
+    qrTitle: '📱 Hotel QR-Code für Gäste',
+    qrDesc: 'Diesen QR-Code können Sie ausdrucken und in den Zimmern platzieren.',
     qrDownload: '📥 QR-Code Bild Herunterladen',
+    statsTitle: '📊 Statistiken der letzten 30 Tage',
+    qrScansLabel: 'QR-Scans / Aufrufe',
+    linkClicksLabel: 'Interaktionen & Klicks',
     searchPlaceholder: '🔍 Suchen (z.B. WLAN, Frühstück, Parkplatz...)'
   },
   en: {
     home: 'Home',
-    admin: '⚙️ Admin Panel',
+    admin: '⚙️ Admin',
     guestView: '📱 Guest View',
     overview: 'Overview',
     rules: 'Rules',
     gastronomy: 'Dining',
     guides: 'Tips',
-    reception: '📞 Reception',
-    directions: '📍 Directions',
-    checkinOut: 'Check-in / Out',
     wifi: 'WiFi',
-    highspeedWifi: 'Highspeed WiFi',
-    network: 'Network',
-    password: 'Password',
     copy: 'Copy',
     copied: '✅ Copied!',
     copyPassword: 'Copy Password',
-    editHotel: '🏨 Hotel Settings',
+    editHotel: '🏨 Edit Hotel & Media',
     hotelName: 'Hotel Name',
     tagline: 'Tagline / Subtitle',
+    logoLabel: 'Hotel Logo (PNG / JPEG or Emoji)',
+    chooseFile: '📁 Choose File',
+    sliderPhotos: 'Slider Photos (max 5 images, max 5MB)',
+    legalNote: '⚠️ Legal notice: Please only upload images you have rights to (GDPR).',
+    addPhotoBtn: '➕ Add Photo to Slider',
     address: 'Address',
     wifiName: 'WiFi Name',
     wifiPass: 'WiFi Password',
+    instagramUrl: 'Instagram Link / Username',
+    facebookUrl: 'Facebook Link / Page',
+    followUs: 'Follow Us on Social Media',
+    socialDesc: 'Share your moments and stay connected with us!',
     save: '💾 Save',
     addSection: '➕ Add New Section',
     titlePlaceholder: 'Title (e.g. Breakfast)',
     descPlaceholder: 'Subtitle (e.g. 08:00 - 10:30 AM)',
     contentPlaceholder: 'Content...',
     addBtn: 'Add',
-    entries: '🗑️ Existing Entries',
+    entries: '🗑️ Entries',
     delete: 'Delete',
-    qrTitle: '📱 Hotel QR Code for Rooms',
-    qrDesc: 'Scan this code or download it for print placement.',
+    qrTitle: '📱 Hotel QR Code for Guests',
+    qrDesc: 'You can print this QR code and place it in rooms.',
     qrDownload: '📥 Download QR Code Image',
+    statsTitle: '📊 Statistics for the last 30 days',
+    qrScansLabel: 'QR Scans / Views',
+    linkClicksLabel: 'Interactions & Clicks',
     searchPlaceholder: '🔍 Search (e.g. WiFi, breakfast, parking...)'
   },
   fr: {
     home: 'Accueil',
-    admin: '⚙️ Admin Panel',
+    admin: '⚙️ Admin',
     guestView: '📱 Vue Invité',
     overview: 'Aperçu',
     rules: 'Règles',
     gastronomy: 'Restauration',
     guides: 'Conseils',
-    reception: '📞 Réception',
-    directions: '📍 Itinéraire',
-    checkinOut: 'Arrivée / Départ',
     wifi: 'Wi-Fi',
-    highspeedWifi: 'Wi-Fi Haut Débit',
-    network: 'Réseau',
-    password: 'Mot de passe',
     copy: 'Copier',
     copied: '✅ Copié !',
     copyPassword: 'Copier le mot de passe',
-    editHotel: '🏨 Configuration Hôtel',
+    editHotel: '🏨 Modifier l’Hôtel & Médias',
     hotelName: 'Nom de l’hôtel',
     tagline: 'Slogan / Sous-titre',
+    logoLabel: 'Logo (PNG / JPEG ou Emoji)',
+    chooseFile: '📁 Choisir',
+    sliderPhotos: 'Photos (max 5 images, 5 Mo)',
+    legalNote: '⚠️ Mention légale : Droits d’image requis (RGPD).',
+    addPhotoBtn: '➕ Ajouter une photo',
     address: 'Adresse',
     wifiName: 'Nom Wi-Fi',
     wifiPass: 'Mot de passe Wi-Fi',
+    instagramUrl: 'Lien Instagram',
+    facebookUrl: 'Lien Facebook',
+    followUs: 'Suivez-nous sur les réseaux sociaux',
+    socialDesc: 'Partagez vos moments et restez connectés avec nous !',
     save: '💾 Enregistrer',
     addSection: '➕ Ajouter une section',
     titlePlaceholder: 'Titre (ex. Petit-déjeuner)',
     descPlaceholder: 'Sous-titre...',
     contentPlaceholder: 'Contenu...',
     addBtn: 'Ajouter',
-    entries: '🗑️ Entrées existantes',
+    entries: '🗑️ Entrées',
     delete: 'Supprimer',
-    qrTitle: '📱 QR Code pour les chambres',
-    qrDesc: 'Téléchargez ce code QR pour l’imprimer dans vos chambres.',
+    qrTitle: '📱 QR Code de l’hôtel',
+    qrDesc: 'Imprimez ce code QR pour les chambres.',
     qrDownload: '📥 Télécharger le QR Code',
+    statsTitle: '📊 Statistiques des 30 derniers jours',
+    qrScansLabel: 'Scans QR / Vues',
+    linkClicksLabel: 'Interactions & Clics',
     searchPlaceholder: '🔍 Rechercher (ex. Wi-Fi, petit-déj...)'
   },
   tr: {
     home: 'Ana Sayfa',
-    admin: '⚙️ Yönetici Paneli',
+    admin: '⚙️ Yönetici',
     guestView: '📱 Misafir Görünümü',
     overview: 'Genel Bakış',
     rules: 'Kurallar',
     gastronomy: 'Yeme & İçme',
     guides: 'İpuçları',
-    reception: '📞 Resepsiyon',
-    directions: '📍 Yol Tarifi',
-    checkinOut: 'Giriş / Çıkış',
     wifi: 'Wi-Fi',
-    highspeedWifi: 'Yüksek Hızlı Wi-Fi',
-    network: 'Ağ Adı',
-    password: 'Şifre',
     copy: 'Kopyala',
     copied: '✅ Kopyalandı!',
     copyPassword: 'Şifreyi Kopyala',
-    editHotel: '🏨 Otel Ayarları',
+    editHotel: '🏨 Otel ve Medya Düzenle',
     hotelName: 'Otel Adı',
     tagline: 'Slogan / Alt Başlık',
+    logoLabel: 'Otel Logosu (PNG / JPEG veya Emoji)',
+    chooseFile: '📁 Dosya Seç',
+    sliderPhotos: 'Slider Fotoğrafları (En fazla 5 görsel, max 5MB)',
+    legalNote: '⚠️ Yasal Uyarı: Yalnızca telif haklarına sahip olduğunuz görselleri yükleyin.',
+    addPhotoBtn: '➕ Slider için Fotoğraf Ekle',
     address: 'Adres',
     wifiName: 'Wi-Fi Adı',
     wifiPass: 'Wi-Fi Şifresi',
+    instagramUrl: 'Instagram Bağlantısı / Kullanıcı Adı',
+    facebookUrl: 'Facebook Bağlantısı / Sayfa',
+    followUs: 'Sosyal Medyada Bizi Takip Edin',
+    socialDesc: 'Deneyimlerinizi paylaşın ve bizimle iletişimde kalın!',
     save: '💾 Kaydet',
     addSection: '➕ Yeni Bölüm Ekle',
     titlePlaceholder: 'Başlık (örn. Kahvaltı)',
     descPlaceholder: 'Alt başlık (örn. 08:00 - 10:30)',
     contentPlaceholder: 'İçerik...',
     addBtn: 'Ekle',
-    entries: '🗑️ Mevcut Kayıtlar',
+    entries: '🗑️ Kayıtlar',
     delete: 'Sil',
-    qrTitle: '📱 Odalar için QR Kod',
-    qrDesc: 'Bu QR kodu yazdırıp odalarınıza yerleştirebilirsiniz.',
+    qrTitle: '📱 Misafirler için QR Kod',
+    qrDesc: 'Bu QR kodu yazdırıp odalara yerleştirebilirsiniz.',
     qrDownload: '📥 QR Kodu İndir',
-    searchPlaceholder: '🔍 Arama (örn. Wi-Fi, kahvaltı, otopark...)'
-  },
-  es: {
-    home: 'Inicio',
-    admin: '⚙️ Panel Admin',
-    guestView: '📱 Vista Huésped',
-    overview: 'Resumen',
-    rules: 'Reglas',
-    gastronomy: 'Gastronomía',
-    guides: 'Consejos',
-    reception: '📞 Recepción',
-    directions: '📍 Cómo llegar',
-    checkinOut: 'Entrada / Salida',
-    wifi: 'WiFi',
-    highspeedWifi: 'WiFi Alta Velocidad',
-    network: 'Red',
-    password: 'Contraseña',
-    copy: 'Copiar',
-    copied: '✅ ¡Copiado!',
-    copyPassword: 'Copiar contraseña',
-    editHotel: '🏨 Configuración del Hotel',
-    hotelName: 'Nombre del Hotel',
-    tagline: 'Slogan / Subtítulo',
-    address: 'Dirección',
-    wifiName: 'Nombre WiFi',
-    wifiPass: 'Contraseña WiFi',
-    save: '💾 Guardar',
-    addSection: '➕ Añadir sección',
-    titlePlaceholder: 'Título (ej. Desayuno)',
-    descPlaceholder: 'Subtítulo (ej. 08:00 - 10:30)',
-    contentPlaceholder: 'Contenido...',
-    addBtn: 'Añadir',
-    entries: '🗑️ Entradas existentes',
-    delete: 'Eliminar',
-    qrTitle: '📱 Código QR para Habitaciones',
-    qrDesc: 'Imprima este código QR y colóquelo en las habitaciones.',
-    qrDownload: '📥 Descargar QR Code',
-    searchPlaceholder: '🔍 Buscar (ej. WiFi, desayuno, parking...)'
+    statsTitle: '📊 Son 30 Günün İstatistikleri',
+    qrScansLabel: 'QR Tarama / Görüntülenme',
+    linkClicksLabel: 'Etkileşim & Tıklama',
+    searchPlaceholder: '🔍 Ne aramak istemiştiniz? (örn. Wi-Fi, kahvaltı...)'
   }
 };
 
-// Clean Inline SVG Flags
-const SVGFlags = {
-  de: () => (
-    <svg className="w-5 h-3.5 rounded-sm object-cover shadow-sm inline-block shrink-0" viewBox="0 0 640 480">
-      <path fill="#ffce00" d="M0 320h640v160H0z"/>
-      <path fill="#000" d="M0 0h640v160H0z"/>
-      <path fill="#d00" d="M0 160h640v160H0z"/>
-    </svg>
-  ),
-  en: () => (
-    <svg className="w-5 h-3.5 rounded-sm object-cover shadow-sm inline-block shrink-0" viewBox="0 0 640 480">
-      <path fill="#012169" d="M0 0h640v480H0z"/>
-      <path fill="#FFF" d="m75 0 245 184L565 0h75v55L395 240l245 185v55h-75L320 296 75 480H0v-55l245-185L0 55V0h75z"/>
-      <path fill="#C8102E" d="m424 286 216 163v31h-41L379 317l45-31zm-208 0L0 449v31h41l220-163-45-31zM640 0v7L420 172l45 31L640 47V0zM0 0v7l220 165-45 31L0 47V0z"/>
-      <path fill="#FFF" d="M240 0h160v480H240zM0 160h640v160H0z"/>
-      <path fill="#C8102E" d="M267 0h106v480H267zM0 187h640v106H0z"/>
-    </svg>
-  ),
-  fr: () => (
-    <svg className="w-5 h-3.5 rounded-sm object-cover shadow-sm inline-block shrink-0" viewBox="0 0 640 480">
-      <path fill="#fff" d="M0 0h640v480H0z"/>
-      <path fill="#002654" d="M0 0h213.3v480H0z"/>
-      <path fill="#ce1126" d="M426.7 0H640v480H426.7z"/>
-    </svg>
-  ),
-  tr: () => (
-    <svg className="w-5 h-3.5 rounded-sm object-cover shadow-sm inline-block shrink-0" viewBox="0 0 640 480">
-      <path fill="#e30a17" d="M0 0h640v480H0z"/>
-      <circle cx="260" cy="240" r="140" fill="#fff"/>
-      <circle cx="290" cy="240" r="112" fill="#e30a17"/>
-      <path fill="#fff" d="M364 240l82.3 26.7-50.9-70 50.9-70.1-82.3 26.7 31.4-86.4-82.2 59.8 31.4 86.4-82.2-59.8z"/>
-    </svg>
-  ),
-  es: () => (
-    <svg className="w-5 h-3.5 rounded-sm object-cover shadow-sm inline-block shrink-0" viewBox="0 0 640 480">
-      <path fill="#c60b1e" d="M0 0h640v480H0z"/>
-      <path fill="#ffc400" d="M0 120h640v240H0z"/>
-    </svg>
-  )
-};
-
-const LANG_OPTIONS = [
-  { code: 'de', label: 'DE' },
-  { code: 'en', label: 'EN' },
-  { code: 'fr', label: 'FR' },
-  { code: 'tr', label: 'TR' },
-  { code: 'es', label: 'ES' }
-];
-
 export default function App() {
-  const [viewMode, setViewMode] = useState('app'); // 'landing' or 'app'
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentHotelSlug = urlParams.get('hotel');
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [lang, setLang] = useState('de');
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [accommodation, setAccommodation] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(!!currentHotelSlug);
   const [copiedWifi, setCopiedWifi] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Modal for SaaS onboarding
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardForm, setOnboardForm] = useState({ hotelName: '', email: '', slug: '' });
-
-  // Hotel Metadata
-  const [accommodation, setAccommodation] = useState({
-    id: 'rini-bini-hotel',
-    name: 'Rini-Bini Hotel & Café',
-    tagline: 'Willkommen in Ihrem Zuhause – Mit ganz viel Liebe ❤️',
-    address: 'Weinstraße 35-39, 67146 Deidesheim',
-    wifi_name: 'RiniBini_Guest',
-    wifi_pass: 'RiniBini2026!',
-    emergency_phone: '+49 6326 972201',
-    checkin_time: '15:00 Uhr',
-    checkout_time: '11:00 Uhr',
-    image_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
-    is_paid: false,
-    trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  const [accForm, setAccForm] = useState({
+    id: currentHotelSlug || 'hotel-new-start',
+    name: 'Hotel New Start',
+    tagline: 'Willkommen in Ihrem neuen Lieblingsort!',
+    wifi_name: 'NewStart_Guest',
+    wifi_pass: 'Start2026!',
+    address: 'Musterstraße 1, 67146 Deidesheim',
+    instagram_url: '',
+    facebook_url: '',
+    qr_scans: 1,
+    link_clicks: 0,
+    images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80'],
+    logo_url: '🏨'
   });
 
-  // Categories & Details
-  const [categories, setCategories] = useState([
-    { id: '1', title: 'Frühstücksbuffet', desc_text: 'Täglich 08:00 - 10:30 Uhr', content: 'Genießen Sie unser frisches regionales Frühstücksbuffet im Hauptrestaurant im Erdgeschoss.', tab_type: 'overview' },
-    { id: '2', title: 'Parken & Tiefgarage', desc_text: 'Kostenfrei für Gäste', content: 'Kostenlose Parkplätze stehen hinter dem Haus zur Verfügung. Garagenschlüssel an der Rezeption.', tab_type: 'rules' },
-    { id: '3', title: 'Restaurant Empfehlung', desc_text: 'Pfälzer Spezialitäten', content: 'Besuchen Sie unser Partner-Weingut gleich um die Ecke für traditionelle Speisen und Weinverkostungen.', tab_type: 'gastronomy' },
-    { id: '4', title: 'Wanderwege & Ausflüge', desc_text: 'Erkunden Sie Deidesheim', content: 'Direkt hinter dem Hotel beginnen die schönsten Wanderwege durch die Pfälzer Weinberge.', tab_type: 'guides' }
-  ]);
+  const [newCat, setNewCat] = useState({
+    title: '',
+    desc_text: '',
+    content: '',
+    icon: '📌',
+    tab_type: 'overview'
+  });
 
-  const [newCat, setNewCat] = useState({ title: '', desc_text: '', content: '', tab_type: 'overview' });
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS.de;
-  const CurrentFlag = SVGFlags[lang] || SVGFlags.de;
 
-  const copyWifiPassword = () => {
-    navigator.clipboard.writeText(accommodation.wifi_pass);
+  useEffect(() => {
+    if (currentHotelSlug) {
+      fetchData();
+      if (!isAdmin) {
+        trackScan();
+      }
+    }
+  }, [currentHotelSlug]);
+
+  useEffect(() => {
+    if (accommodation?.images && accommodation.images.length > 1) {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % accommodation.images.length);
+      }, 4000);
+      return () => clearInterval(timer);
+    }
+  }, [accommodation]);
+
+  async function trackScan() {
+    try {
+      const { data } = await supabase.from('accommodations').select('qr_scans').eq('id', currentHotelSlug).single();
+      const currentScans = data?.qr_scans || 0;
+      await supabase.from('accommodations').update({ qr_scans: currentScans + 1 }).eq('id', currentHotelSlug);
+    } catch (err) {
+      console.error('Scan track error:', err);
+    }
+  }
+
+  async function trackClick() {
+    try {
+      const { data } = await supabase.from('accommodations').select('link_clicks').eq('id', currentHotelSlug).single();
+      const currentClicks = data?.link_clicks || 0;
+      await supabase.from('accommodations').update({ link_clicks: currentClicks + 1 }).eq('id', currentHotelSlug);
+    } catch (err) {
+      console.error('Click track error:', err);
+    }
+  }
+
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const { data: accData } = await supabase
+        .from('accommodations')
+        .select('*')
+        .eq('id', currentHotelSlug)
+        .single();
+
+      if (accData) {
+        if (!accData.images && accData.image_url) {
+          accData.images = [accData.image_url];
+        }
+        setAccommodation(accData);
+        setAccForm(accData);
+      } else {
+        const defaultHotel = {
+          id: currentHotelSlug,
+          name: 'Hotel New Start',
+          tagline: 'Herzlich willkommen!',
+          wifi_name: 'NewStart_Guest',
+          wifi_pass: 'Start2026!',
+          address: 'Musterstraße 1, 67146 Deidesheim',
+          instagram_url: '',
+          facebook_url: '',
+          qr_scans: 1,
+          link_clicks: 0,
+          images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80'],
+          logo_url: '🏨'
+        };
+        await supabase.from('accommodations').upsert([defaultHotel]);
+        setAccommodation(defaultHotel);
+        setAccForm(defaultHotel);
+      }
+
+      const { data: catData } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('hotel_slug', currentHotelSlug)
+        .order('sort_order', { ascending: true });
+
+      if (catData && catData.length > 0) {
+        setCategories(catData);
+      } else {
+        const defaultCats = [
+          { id: crypto.randomUUID(), title: 'Willkommen', desc_text: 'Schön, dass Sie da sind', content: 'Genießen Sie Ihren Aufenthalt in unserem Hotel.', icon: '🍷', tab_type: 'overview', sort_order: 1, hotel_slug: currentHotelSlug },
+          { id: crypto.randomUUID(), title: 'WLAN', desc_text: 'Kostenfreies Internet', content: 'Nutzen Sie unser schnelles WLAN.', icon: '📶', tab_type: 'overview', sort_order: 2, hotel_slug: currentHotelSlug }
+        ];
+        await supabase.from('categories').insert(defaultCats);
+        setCategories(defaultCats);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  }
+
+  const handleFileUpload = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Die Datei ist zu groß! Maximale Größe ist 5MB.');
+      return;
+    }
+
+    if (type === 'photo') {
+      const currentImages = accForm.images || [];
+      if (currentImages.length >= 5) {
+        alert('Maximal 5 Fotos im Slider erlaubt!');
+        return;
+      }
+    }
+
+    if (type === 'logo') setUploadingLogo(true);
+    else setUploadingPhoto(true);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${currentHotelSlug}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('hotel-assets')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      alert('Fehler beim Hochladen: ' + uploadError.message);
+      if (type === 'logo') setUploadingLogo(false);
+      else setUploadingPhoto(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from('hotel-assets').getPublicUrl(filePath);
+    const publicUrl = data.publicUrl;
+
+    if (type === 'logo') {
+      setAccForm({ ...accForm, logo_url: publicUrl });
+      setUploadingLogo(false);
+    } else {
+      const currentImages = accForm.images || [];
+      setAccForm({ ...accForm, images: [...currentImages, publicUrl] });
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleRemovePhoto = (indexToRemove) => {
+    const updatedImages = accForm.images.filter((_, idx) => idx !== indexToRemove);
+    setAccForm({ ...accForm, images: updatedImages });
+  };
+
+  const handleSaveAccommodation = async () => {
+    const payload = {
+      id: accForm.id,
+      name: accForm.name,
+      tagline: accForm.tagline,
+      wifi_name: accForm.wifi_name,
+      wifi_pass: accForm.wifi_pass,
+      address: accForm.address,
+      instagram_url: accForm.instagram_url,
+      facebook_url: accForm.facebook_url,
+      logo_url: accForm.logo_url,
+      images: accForm.images,
+      image_url: accForm.images?.[0] || ''
+    };
+
+    const { error } = await supabase.from('accommodations').upsert(payload);
+    if (!error) {
+      setAccommodation({ ...accommodation, ...accForm });
+      alert('Erfolgreich gespeichert! ❤️');
+    } else {
+      alert('Fehler: ' + error.message);
+    }
+  };
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    if (!newCat.title || !newCat.content) {
+      alert('Bitte Titel und Inhalt ausfüllen!');
+      return;
+    }
+
+    const { error } = await supabase.from('categories').insert([
+      {
+        id: crypto.randomUUID(),
+        title: newCat.title,
+        desc_text: newCat.desc_text,
+        content: newCat.content,
+        icon: newCat.icon || '📌',
+        tab_type: newCat.tab_type || 'overview',
+        hotel_slug: currentHotelSlug,
+        sort_order: categories.length + 1
+      }
+    ]);
+
+    if (!error) {
+      setNewCat({ title: '', desc_text: '', content: '', icon: '📌', tab_type: 'overview' });
+      fetchData();
+      alert('Eintrag hinzugefügt!');
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm('Eintrag löschen?')) return;
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (!error) fetchData();
+  };
+
+  const copyWifi = () => {
+    navigator.clipboard.writeText(accommodation?.wifi_pass || '');
     setCopiedWifi(true);
+    trackClick();
     setTimeout(() => setCopiedWifi(false), 2000);
   };
 
-  const handleAddCategory = (e) => {
-    e.preventDefault();
-    if (!newCat.title || !newCat.content) return;
-    setCategories([...categories, { ...newCat, id: String(Date.now()) }]);
-    setNewCat({ title: '', desc_text: '', content: '', tab_type: 'overview' });
+  const getInstagramLink = () => {
+    if (!accForm.instagram_url) return null;
+    if (accForm.instagram_url.startsWith('http')) return accForm.instagram_url;
+    return `https://instagram.com/${accForm.instagram_url.replace('@', '')}`;
   };
 
-  const handleDeleteCategory = (id) => {
-    setCategories(categories.filter(c => c.id !== id));
+  const getFacebookLink = () => {
+    if (!accForm.facebook_url) return null;
+    if (accForm.facebook_url.startsWith('http')) return accForm.facebook_url;
+    return `https://facebook.com/${accForm.facebook_url}`;
   };
 
-  const filteredCategories = categories
-    .filter(c => c.tab_type === activeTab)
-    .filter(c => searchQuery === '' || 
-      c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      c.content.toLowerCase().includes(searchQuery.toLowerCase())
+  if (!currentHotelSlug) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-slate-100 font-sans flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="text-3xl">📖</span>
+          <span className="font-extrabold text-2xl text-white">GästeMappe<span className="text-rose-500">24</span></span>
+        </div>
+        <h1 className="text-3xl sm:text-5xl font-black max-w-xl leading-tight">
+          Die digitale Gästemappe für Hotels & Ferienwohnungen.
+        </h1>
+        <p className="text-slate-400 text-sm max-w-md">
+          Öffnen Sie Ihr Hotel mit dem entsprechenden Link, z.B. <code className="text-rose-400">?hotel=hotel-new-start</code>
+        </p>
+      </div>
     );
+  }
 
-  const getQRUrl = () => {
-    const currentUrl = window.location.origin + window.location.pathname + `?hotel=${accommodation.id}`;
-    return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(currentUrl)}`;
-  };
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-xs">Lade...</div>;
+  }
 
-  // --- RENDER APP / MOBILE VIEW ---
-  const renderAppView = () => (
+  const filteredCategories = categories.filter(c => {
+    const matchesTab = (c.tab_type || 'overview') === activeTab;
+    const matchesSearch = searchQuery.trim() === '' || 
+      c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.desc_text && c.desc_text.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    if (searchQuery.trim() !== '') {
+      return matchesSearch;
+    }
+    return matchesTab;
+  });
+
+  const hotelImages = accommodation?.images && accommodation.images.length > 0 
+    ? accommodation.images 
+    : [accommodation?.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945'];
+
+  const currentHotelUrl = window.location.href;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentHotelUrl)}`;
+
+  return (
     <div className="min-h-screen bg-slate-100 font-sans pb-28">
-      {/* Top Header */}
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('landing')}
-            className="text-xs text-slate-500 hover:text-slate-800 font-medium bg-slate-100 px-2 py-1 rounded-lg transition-all"
-          >
-            ← B2B Landing
-          </button>
-          <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate max-w-[140px]">
-            {accommodation.name}
-          </span>
+          <a href="/" className="text-xs text-slate-400 font-bold">{t.home}</a>
+          <span className="text-slate-300">|</span>
+          <span className="font-extrabold text-sm text-rose-600 truncate max-w-[120px]">{accommodation?.name || currentHotelSlug}</span>
         </div>
-
+        
         <div className="flex items-center gap-2">
-          {/* Custom Dropdown Flag Switcher */}
-          <div className="relative">
-            <button
-              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-2.5 py-1.5 shadow-sm transition-all"
-            >
-              <CurrentFlag />
-              <span>{lang.toUpperCase()}</span>
-              <span className="text-[9px] text-slate-400">▼</span>
-            </button>
-
-            {langDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 space-y-1">
-                {LANG_OPTIONS.map((item) => {
-                  const FlagComp = SVGFlags[item.code];
-                  return (
-                    <button
-                      key={item.code}
-                      onClick={() => {
-                        setLang(item.code);
-                        setLangDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-xs font-bold transition-all ${
-                        lang === item.code ? 'bg-rose-50 text-rose-600' : 'text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <FlagComp />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+            className="bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-2 py-1.5 focus:outline-none"
+          >
+            <option value="de">🇩🇪 DE</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="fr">🇫🇷 FR</option>
+            <option value="tr">🇹🇷 TR</option>
+          </select>
 
           <button
+            type="button"
             onClick={() => setIsAdmin(!isAdmin)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xl shadow-sm transition-all ${
-              isAdmin ? 'bg-amber-500 text-white' : 'bg-slate-900 text-white'
-            }`}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-xl shadow-sm ${isAdmin ? 'bg-amber-500 text-white' : 'bg-slate-900 text-white'}`}
           >
             {isAdmin ? t.guestView : t.admin}
           </button>
         </div>
       </header>
 
-      {/* Main Container */}
       <main className="max-w-md mx-auto p-4 space-y-4">
         {isAdmin ? (
-          /* --- ADMIN PANEL --- */
           <div className="space-y-6">
-            {/* QR Code Section */}
-            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 text-center space-y-3">
-              <h2 className="text-base font-bold text-slate-800 border-b pb-2">{t.qrTitle}</h2>
-              <p className="text-xs text-slate-500">{t.qrDesc}</p>
-              <div className="flex justify-center py-2">
-                <img src={getQRUrl()} alt="Hotel QR Code" className="w-44 h-44 rounded-2xl border p-2 bg-white shadow-inner" />
+            <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-white p-5 rounded-3xl shadow-lg border border-slate-800 space-y-3">
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.statsTitle}</h2>
+              <div className="grid grid-cols-2 gap-4 text-center pt-2">
+                <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+                  <p className="text-3xl font-black text-rose-400">{accommodation?.qr_scans || 0}</p>
+                  <p className="text-[10px] text-slate-300 font-medium uppercase mt-1">{t.qrScansLabel}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+                  <p className="text-3xl font-black text-emerald-400">{accommodation?.link_clicks || 0}</p>
+                  <p className="text-[10px] text-slate-300 font-medium uppercase mt-1">{t.linkClicksLabel}</p>
+                </div>
               </div>
-              <a
-                href={getQRUrl()}
-                download="hotel-qrcode.png"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs shadow transition-all"
-              >
-                {t.qrDownload}
-              </a>
             </div>
 
-            {/* Hotel Edit Form */}
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 text-center space-y-3">
+              <h2 className="text-base font-bold text-slate-800 border-b pb-2 text-left">{t.qrTitle}</h2>
+              <p className="text-xs text-slate-500">{t.qrDesc}</p>
+              
+              <div className="bg-slate-50 p-4 rounded-2xl inline-block border">
+                <img src={qrCodeUrl} alt="Hotel QR Code" className="w-40 h-40 mx-auto rounded-xl shadow-sm" />
+              </div>
+
+              <div className="pt-2">
+                <a
+                  href={qrCodeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  download="hotel-qr.png"
+                  className="block w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs text-center shadow"
+                >
+                  {t.qrDownload}
+                </a>
+              </div>
+            </div>
+
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 space-y-4">
               <h2 className="text-base font-bold text-slate-800 border-b pb-2">{t.editHotel}</h2>
+              
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">{t.hotelName}</label>
                 <input
                   type="text"
-                  value={accommodation.name}
-                  onChange={(e) => setAccommodation({ ...accommodation, name: e.target.value })}
-                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  value={accForm.name || ''}
+                  onChange={(e) => setAccForm({ ...accForm, name: e.target.value })}
+                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
                 />
               </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">{t.tagline}</label>
                 <input
                   type="text"
-                  value={accommodation.tagline}
-                  onChange={(e) => setAccommodation({ ...accommodation, tagline: e.target.value })}
-                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  value={accForm.tagline || ''}
+                  onChange={(e) => setAccForm({ ...accForm, tagline: e.target.value })}
+                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.logoLabel}</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={accForm.logo_url || ''}
+                    onChange={(e) => setAccForm({ ...accForm, logo_url: e.target.value })}
+                    className="flex-1 p-2 border rounded-xl text-xs bg-slate-50"
+                  />
+                  <label className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold px-3 py-2.5 rounded-xl cursor-pointer">
+                    {uploadingLogo ? '...' : t.chooseFile}
+                    <input type="file" accept="image/png, image/jpeg, image/webp" onChange={(e) => handleFileUpload(e, 'logo')} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.sliderPhotos}</label>
+                <p className="text-[10px] text-amber-700 bg-amber-50 p-2 rounded-xl mb-2 border border-amber-200">{t.legalNote}</p>
+
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {accForm.images?.map((img, idx) => (
+                    <div key={idx} className="relative group h-20 rounded-xl overflow-hidden border">
+                      <img src={img} alt="Slide" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(idx)}
+                        className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {(!accForm.images || accForm.images.length < 5) && (
+                  <label className="block w-full text-center bg-slate-100 hover:bg-slate-200 border border-dashed border-slate-300 py-3 rounded-xl text-xs font-bold text-slate-700 cursor-pointer">
+                    {uploadingPhoto ? '...' : t.addPhotoBtn}
+                    <input type="file" accept="image/png, image/jpeg, image/webp" onChange={(e) => handleFileUpload(e, 'photo')} className="hidden" />
+                  </label>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">{t.address}</label>
                 <input
                   type="text"
-                  value={accommodation.address}
-                  onChange={(e) => setAccommodation({ ...accommodation, address: e.target.value })}
-                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  value={accForm.address || ''}
+                  onChange={(e) => setAccForm({ ...accForm, address: e.target.value })}
+                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">{t.wifiName}</label>
                   <input
                     type="text"
-                    value={accommodation.wifi_name}
-                    onChange={(e) => setAccommodation({ ...accommodation, wifi_name: e.target.value })}
-                    className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    value={accForm.wifi_name || ''}
+                    onChange={(e) => setAccForm({ ...accForm, wifi_name: e.target.value })}
+                    className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">{t.wifiPass}</label>
                   <input
                     type="text"
-                    value={accommodation.wifi_pass}
-                    onChange={(e) => setAccommodation({ ...accommodation, wifi_pass: e.target.value })}
-                    className="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    value={accForm.wifi_pass || ''}
+                    onChange={(e) => setAccForm({ ...accForm, wifi_pass: e.target.value })}
+                    className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t.instagramUrl}</label>
+                  <input
+                    type="text"
+                    value={accForm.instagram_url || ''}
+                    onChange={(e) => setAccForm({ ...accForm, instagram_url: e.target.value })}
+                    className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t.facebookUrl}</label>
+                  <input
+                    type="text"
+                    value={accForm.facebook_url || ''}
+                    onChange={(e) => setAccForm({ ...accForm, facebook_url: e.target.value })}
+                    className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveAccommodation}
+                className="w-full bg-rose-600 hover:bg-rose-500 text-white font-extrabold py-3 rounded-xl text-xs shadow-md transition-all"
+              >
+                {t.save}
+              </button>
             </div>
 
-            {/* Add Section */}
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 space-y-4">
               <h2 className="text-base font-bold text-slate-800 border-b pb-2">{t.addSection}</h2>
               <form onSubmit={handleAddCategory} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tab Kategorie</label>
+                <div className="flex gap-2">
+                  <select
+                    value={newCat.icon}
+                    onChange={(e) => setNewCat({ ...newCat, icon: e.target.value })}
+                    className="p-2.5 border rounded-xl text-lg bg-slate-50"
+                  >
+                    {AVAILABLE_ICONS.map((icon) => (
+                      <option key={icon} value={icon}>{icon}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder={t.titlePlaceholder}
+                    value={newCat.title}
+                    onChange={(e) => setNewCat({ ...newCat, title: e.target.value })}
+                    className="flex-1 p-2.5 border rounded-xl text-xs bg-slate-50"
+                  />
+                </div>
+
+                <div className="flex gap-2">
                   <select
                     value={newCat.tab_type}
                     onChange={(e) => setNewCat({ ...newCat, tab_type: e.target.value })}
-                    className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
+                    className="p-2.5 border rounded-xl text-xs bg-slate-50 font-bold"
                   >
                     <option value="overview">{t.overview}</option>
                     <option value="rules">{t.rules}</option>
                     <option value="gastronomy">{t.gastronomy}</option>
                     <option value="guides">{t.guides}</option>
                   </select>
+                  <input
+                    type="text"
+                    placeholder={t.descPlaceholder}
+                    value={newCat.desc_text}
+                    onChange={(e) => setNewCat({ ...newCat, desc_text: e.target.value })}
+                    className="flex-1 p-2.5 border rounded-xl text-xs bg-slate-50"
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder={t.titlePlaceholder}
-                  value={newCat.title}
-                  onChange={(e) => setNewCat({ ...newCat, title: e.target.value })}
-                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
-                />
-                <input
-                  type="text"
-                  placeholder={t.descPlaceholder}
-                  value={newCat.desc_text}
-                  onChange={(e) => setNewCat({ ...newCat, desc_text: e.target.value })}
-                  className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
-                />
+
                 <textarea
                   placeholder={t.contentPlaceholder}
                   value={newCat.content}
                   onChange={(e) => setNewCat({ ...newCat, content: e.target.value })}
+                  rows={3}
                   className="w-full p-2.5 border rounded-xl text-xs bg-slate-50"
-                  rows="3"
                 />
+
                 <button
                   type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow transition-all"
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 rounded-xl text-xs shadow transition-all"
                 >
                   {t.addBtn}
                 </button>
               </form>
             </div>
 
-            {/* Existing Entries */}
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 space-y-3">
               <h2 className="text-base font-bold text-slate-800 border-b pb-2">{t.entries}</h2>
               <div className="space-y-2">
                 {categories.map((cat) => (
-                  <div key={cat.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border">
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">{cat.title}</p>
-                      <p className="text-[10px] text-slate-500 truncate max-w-[180px]">{cat.content}</p>
+                  <div key={cat.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{cat.icon}</span>
+                      <div>
+                        <p className="font-bold text-slate-800">{cat.title}</p>
+                        <p className="text-[10px] text-slate-500">{cat.tab_type}</p>
+                      </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleDeleteCategory(cat.id)}
-                      className="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all"
+                      className="bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl font-bold text-[10px]"
                     >
                       {t.delete}
                     </button>
@@ -517,248 +764,137 @@ export default function App() {
             </div>
           </div>
         ) : (
-          /* --- GUEST VIEW --- */
-          <>
+          <div className="space-y-4">
             <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200">
-              <div className="h-44 relative bg-slate-900">
+              <div className="relative h-56 bg-slate-200">
                 <img
-                  src={accommodation.image_url}
-                  alt={accommodation.name}
-                  className="w-full h-full object-cover opacity-90"
+                  src={hotelImages[currentSlide] || hotelImages[0]}
+                  alt="Hotel Slide"
+                  className="w-full h-full object-cover transition-all duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-              </div>
-              <div className="p-5 text-center -mt-8 relative">
-                <div className="bg-white p-3 rounded-2xl shadow-md inline-block mb-2 border border-slate-100">
-                  <span className="text-2xl">🏨</span>
-                </div>
-                <h1 className="text-xl font-black text-slate-900">{accommodation.name}</h1>
-                <p className="text-xs text-rose-600 font-semibold mt-1">{accommodation.tagline}</p>
-                <p className="text-[11px] text-slate-400 mt-1">{accommodation.address}</p>
-
-                <div className="flex justify-center gap-2 mt-4">
-                  <a
-                    href={`tel:${accommodation.emergency_phone}`}
-                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm"
-                  >
-                    {t.reception}
-                  </a>
-                  <a
-                    href={`https://maps.google.com/?q=${encodeURIComponent(accommodation.address)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm"
-                  >
-                    {t.directions}
-                  </a>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-2xl">{accommodation?.logo_url || '🏨'}</span>
+                    <h1 className="text-xl font-black">{accommodation?.name || currentHotelSlug}</h1>
+                  </div>
+                  <p className="text-xs text-slate-200 line-clamp-1">{accommodation?.tagline}</p>
                 </div>
               </div>
             </div>
 
-            {/* Search Input */}
-            <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+            <div className="relative">
               <input
                 type="text"
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-2 text-xs bg-slate-50 rounded-xl outline-none"
+                className="w-full p-3.5 bg-white border border-slate-200 rounded-2xl text-xs shadow-sm pl-4 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
               />
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex bg-slate-200/80 p-1 rounded-2xl gap-1 text-xs font-bold sticky top-16 z-30 backdrop-blur-md">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📶</span>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-slate-400">{t.wifi}</p>
+                  <p className="text-xs font-bold text-slate-800">{accommodation?.wifi_name || 'WLAN'}</p>
+                </div>
+              </div>
               <button
-                onClick={() => setActiveTab('overview')}
-                className={`flex-1 py-2.5 rounded-xl transition-all ${
-                  activeTab === 'overview' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-600'
-                }`}
+                type="button"
+                onClick={copyWifi}
+                className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition-all"
               >
-                {t.overview}
-              </button>
-              <button
-                onClick={() => setActiveTab('rules')}
-                className={`flex-1 py-2.5 rounded-xl transition-all ${
-                  activeTab === 'rules' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-600'
-                }`}
-              >
-                {t.rules}
-              </button>
-              <button
-                onClick={() => setActiveTab('gastronomy')}
-                className={`flex-1 py-2.5 rounded-xl transition-all ${
-                  activeTab === 'gastronomy' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-600'
-                }`}
-              >
-                {t.gastronomy}
-              </button>
-              <button
-                onClick={() => setActiveTab('guides')}
-                className={`flex-1 py-2.5 rounded-xl transition-all ${
-                  activeTab === 'guides' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-600'
-                }`}
-              >
-                {t.guides}
+                {copiedWifi ? t.copied : t.copyPassword}
               </button>
             </div>
 
-            {/* Wi-Fi Card */}
-            {activeTab === 'overview' && (
-              <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-5 rounded-3xl shadow-md space-y-3">
-                <div className="flex items-center gap-2 text-rose-400">
-                  <span>🛜</span>
-                  <span className="font-semibold text-xs uppercase">{t.highspeedWifi}</span>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase">{t.network}</p>
-                  <p className="font-bold text-base">{accommodation.wifi_name}</p>
-                </div>
-                <div className="flex items-center justify-between bg-white/10 p-3 rounded-2xl backdrop-blur-sm border border-white/10">
-                  <div>
-                    <p className="text-[10px] text-rose-300 uppercase font-bold">{t.password}</p>
-                    <p className="font-mono text-sm tracking-wider font-bold">{accommodation.wifi_pass}</p>
-                  </div>
-                  <button
-                    onClick={copyWifiPassword}
-                    className="bg-white text-slate-900 text-xs font-bold px-3 py-2 rounded-xl shadow hover:bg-rose-50 transition-all"
-                  >
-                    {copiedWifi ? t.copied : t.copy}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Dynamic Content List */}
-            <div className="space-y-3">
+            <div className="space-y-3 pt-2">
               {filteredCategories.map((cat) => (
-                <div key={cat.id} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📌</span>
+                <div key={cat.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{cat.icon}</span>
                     <div>
-                      <h3 className="font-bold text-slate-900 text-sm">{cat.title}</h3>
-                      {cat.desc_text && <p className="text-xs text-rose-600 font-medium">{cat.desc_text}</p>}
+                      <h3 className="text-sm font-bold text-slate-800">{cat.title}</h3>
+                      {cat.desc_text && <p className="text-[10px] text-slate-400 font-medium">{cat.desc_text}</p>}
                     </div>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-2.5">
-                    {cat.content}
-                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line pt-1">{cat.content}</p>
                 </div>
               ))}
             </div>
-          </>
+
+            {(getInstagramLink() || getFacebookLink()) && (
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 text-center space-y-2 mt-6">
+                <h3 className="text-xs font-bold text-slate-800">{t.followUs}</h3>
+                <p className="text-[10px] text-slate-400">{t.socialDesc}</p>
+                <div className="flex justify-center gap-3 pt-2">
+                  {getInstagramLink() && (
+                    <a
+                      href={getInstagramLink()}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={trackClick}
+                      className="bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 text-white font-bold text-xs px-4 py-2 rounded-xl shadow"
+                    >
+                      📸 Instagram
+                    </a>
+                  )}
+                  {getFacebookLink() && (
+                    <a
+                      href={getFacebookLink()}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={trackClick}
+                      className="bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-xl shadow"
+                    >
+                      📘 Facebook
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </main>
 
-      {/* Floating Wi-Fi Copy Button */}
       {!isAdmin && (
-        <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-4 z-40">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 flex justify-around items-center z-50 max-w-md mx-auto shadow-lg">
           <button
-            onClick={copyWifiPassword}
-            className="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-2xl shadow-xl flex items-center justify-between hover:bg-slate-800 transition-all border border-slate-700 backdrop-blur-md"
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={`flex flex-col items-center gap-1 text-[10px] font-bold ${activeTab === 'overview' ? 'text-rose-600' : 'text-slate-400'}`}
           >
-            <div className="flex items-center gap-2 text-xs">
-              <span>🛜</span>
-              <span>{t.wifi}: <strong>{accommodation.wifi_name}</strong></span>
-            </div>
-            <span className="text-xs bg-rose-600 px-3 py-1.5 rounded-xl font-bold">
-              {copiedWifi ? t.copied : t.copyPassword}
-            </span>
+            <span className="text-base">🏠</span>
+            <span>{t.overview}</span>
           </button>
-        </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('rules')}
+            className={`flex flex-col items-center gap-1 text-[10px] font-bold ${activeTab === 'rules' ? 'text-rose-600' : 'text-slate-400'}`}
+          >
+            <span className="text-base">📋</span>
+            <span>{t.rules}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('gastronomy')}
+            className={`flex flex-col items-center gap-1 text-[10px] font-bold ${activeTab === 'gastronomy' ? 'text-rose-600' : 'text-slate-400'}`}
+          >
+            <span className="text-base">🍳</span>
+            <span>{t.gastronomy}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('guides')}
+            className={`flex flex-col items-center gap-1 text-[10px] font-bold ${activeTab === 'guides' ? 'text-rose-600' : 'text-slate-400'}`}
+          >
+            <span className="text-base">💡</span>
+            <span>{t.guides}</span>
+          </button>
+        </nav>
       )}
     </div>
   );
-
-  // --- RENDER B2B LANDING PAGE ---
-  const renderLandingView = () => (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">💖</span>
-            <span className="font-black text-xl tracking-tight text-white">GästeMappe<span className="text-rose-500">24</span></span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setViewMode('app')}
-              className="text-xs font-semibold text-slate-300 hover:text-white"
-            >
-              Live Demo
-            </button>
-            <button
-              onClick={() => setShowOnboarding(true)}
-              className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-4 py-2 rounded-full shadow-lg"
-            >
-              30 Tage Testen
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="pt-16 pb-20 text-center max-w-3xl mx-auto px-4 space-y-6">
-        <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight">
-          Die digitale Gästemappe für <span className="text-rose-500">Hotels & FEWO</span>
-        </h1>
-        <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-          Begeistern Sie Ihre Gäste mit einer modernen, digitalen Mappe. Kein Papier, kein Drucken, sofortige Updates per Smartphone – ohne App-Download.
-        </p>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={() => setShowOnboarding(true)}
-            className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-6 py-3.5 rounded-2xl text-sm shadow-xl"
-          >
-            Kostenlos Starten →
-          </button>
-          <button
-            onClick={() => setViewMode('app')}
-            className="bg-slate-900 border border-slate-800 text-slate-300 font-bold px-6 py-3.5 rounded-2xl text-sm"
-          >
-            App Live Ansehen
-          </button>
-        </div>
-      </section>
-
-      {/* Onboarding Modal */}
-      {showOnboarding && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl max-w-md w-full relative">
-            <button
-              onClick={() => setShowOnboarding(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-black text-white mb-4">Betrieb Registrieren</h3>
-            <div className="space-y-3 text-left">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Hotel Name</label>
-                <input
-                  type="text"
-                  placeholder="z.B. Hotel Sonne"
-                  value={onboardForm.hotelName}
-                  onChange={(e) => setOnboardForm({ ...onboardForm, hotelName: e.target.value })}
-                  className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                />
-              </div>
-              <button
-                onClick={() => {
-                  if (onboardForm.hotelName) {
-                    setAccommodation({ ...accommodation, name: onboardForm.hotelName });
-                  }
-                  setShowOnboarding(false);
-                  setViewMode('app');
-                  setIsAdmin(true);
-                }}
-                className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs mt-2"
-              >
-                🚀 Mappe Sofort Erstellen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  return viewMode === 'landing' ? renderLandingView() : renderAppView();
 }
